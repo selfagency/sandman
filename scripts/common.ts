@@ -15,7 +15,7 @@ async function transport(level: string, message: string, rest: string[]) {
   }
 }
 
-export const log = {
+const log = {
   error(message: string, ...rest: string[]) {
     const script = process.argv[1]
       .split('/')
@@ -49,3 +49,15 @@ export const log = {
     transport('debug', logMessage, rest).then(() => console.debug(logMessage, ...rest));
   },
 };
+
+let payload;
+if (process.argv[2]) {
+  try {
+    payload = JSON.parse(process.argv[2]);
+  } catch (e) {
+    log.error('Invalid payload', (e as Error).message);
+    process.exit(1);
+  }
+}
+
+export { log, payload };

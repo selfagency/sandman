@@ -90,7 +90,7 @@ curl -v \
 
 A realtime logging console is provided via [Errsole](https://github.com/errsole/errsole.js) on port `8001`. You'll be asked to create a username and password the first time you visit it.
 
-A helper function is provided in `/scripts/common.ts` to transmit log messages to Errsole.
+A `log` function is provided in `/scripts/common.ts` to transmit log messages to Errsole.
 
 ## Security Considerations
 

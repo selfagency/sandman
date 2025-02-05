@@ -1,10 +1,8 @@
 # Sandman 🎩🪝
 
-A personal Node.js-based webhook server that executes TypeScript on-demand with [Errsole](https://github.com/errsole/errsole.js) logging.
+A personal Node.js-based webhook server that executes TypeScript on-demand, with basic auth and [Errsole](https://github.com/errsole/errsole.js) logging.
 
 ## Install
-
-\* Skip steps marked with an asterisk for Docker
 
 1. Fork it
 2. Clone it
@@ -37,6 +35,8 @@ LOG_KEY="ye*@^nMGhLQMNun!s*PUnU^!HPrB*Ne2qeLZn^Ek!eZzgq5kjaPZfBL*r45JDqmR"
 cp config.example.toml config.toml
 code config.toml
 ```
+
+\*Skip steps marked with an asterisk for Docker
 
 ## Config
 

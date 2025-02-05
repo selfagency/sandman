@@ -50,7 +50,7 @@ const log = {
   },
 };
 
-let payload;
+let payload: Record<string, unknown>;
 if (process.argv[2]) {
   try {
     payload = JSON.parse(process.argv[2]);

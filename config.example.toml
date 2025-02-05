@@ -10,5 +10,5 @@ id = "4a7fea25-ced0-4793-9823-63f392a8caf4"
 name = "Secure example"
 description = "A secure example userscript"
 auth = true
-password = "8Jw3#^*J7N#v!5dwa^VL*hZoqCcCZ*%J"
+password = "password"
 script = "secure-example.ts"

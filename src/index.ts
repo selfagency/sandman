@@ -1,38 +1,101 @@
-import { log } from './util';
+import { execa } from 'execa';
+import { Hono } from 'hono';
+import { isEmpty } from 'radashi';
 import { parse as toml } from 'smol-toml';
 import { readFile } from 'fs/promises';
 import { serve } from '@hono/node-server';
-import { Hono } from 'hono';
-import { execa } from 'execa';
+import { basicAuth } from 'hono/basic-auth';
+import { logger } from 'hono/logger';
+
+import { log } from './util';
 
 async function main() {
+  // instantiate web server
   const app = new Hono();
+  app.use(logger(log.info));
 
+  // import configuration
   const scripts = toml(await readFile(`${process.cwd()}/config.toml`, 'utf8'));
 
+  // iterate over scripts and create routes
   for (const script in scripts) {
-    const current = scripts[script] as unknown as Record<string, string>;
+    const s = scripts[script] as unknown as Record<string, string>;
 
-    log.debug(current);
+    app.post(
+      // current endpoint
+      `/hooks/${s.id}`,
 
-    app.post(`/hooks/${current.id}`, async c => {
-      try {
-        let data;
+      // authentication
+      s.auth && !isEmpty(s.password)
+        ? basicAuth({ username: '', password: s.password })
+        : async (c, next) => {
+            await next();
+          },
+
+      // handle request
+      async c => {
         try {
-          data = await c.req.json();
-          const result = await execa('tsx', [`${process.cwd()}/scripts/${current.script}`, JSON.stringify(data)]);
-          return c.json(result);
-        } catch {
-          return c.json({ success: false, status: 400 });
+          let data;
+          try {
+            // parse request body
+            data = await c.req.json();
+
+            // execute script
+            const result = await execa('tsx', [
+              '--env-file=.env',
+              '--experimental-specifier-resolution=node',
+              `${process.cwd()}/scripts/${s.script}`,
+              !isEmpty(data) ? JSON.stringify(data) : '',
+            ]);
+
+            // return result
+            return c.json(result);
+          } catch {
+            // log error
+            log.error('Failed to execute hook', s.id);
+
+            // return error
+            return c.json({ success: false, status: 400 });
+          }
+        } catch (err) {
+          // log error
+          log.error('Failed to execute hook', s.id, err);
+
+          // return error
+          return c.json({ success: false, error: (err as Error).message });
         }
-      } catch (err) {
-        log.error(err);
-        return c.json({ success: false, error: (err as Error).message });
       }
-    });
+    );
   }
 
+  // log endpoint
+  app.post('/log', basicAuth({ username: '', password: process.env.LOG_KEY as string }), async c => {
+    const { level, message, script }: Record<string, string> = await c.req.json();
+    const logMessage = `[${script}] ${message}`;
+
+    switch (level) {
+      case 'info':
+        log.info(logMessage);
+        break;
+      case 'error':
+        log.error(logMessage);
+        break;
+      case 'warn':
+        log.warn(logMessage);
+        break;
+      case 'debug':
+      default:
+        log.debug(logMessage);
+        break;
+    }
+
+    return c.json({ logged: true });
+  });
+
+  // health check
   app.get('/', c => c.json({ status: 'OK' }));
+
+  // start server
   serve({ fetch: app.fetch, port: 3000 });
 }
 

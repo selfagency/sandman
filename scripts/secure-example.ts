@@ -1,7 +1,11 @@
-import type { LoggerContext } from 'errsole';
+import { log } from './common';
 
-export default async (data: Record<string, unknown>, log: LoggerContext) => {
-  log.info('Hello, world!', data);
+async function main() {
+  try {
+    await log('secure-example', 'info', 'Hello, world!');
+  } catch (err) {
+    console.error(err);
+  }
+}
 
-  return { success: true };
-};
+main();

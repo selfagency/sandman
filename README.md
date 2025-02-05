@@ -4,6 +4,8 @@ A basic Node.js-based webhook server that executes TypeScript on-demand with [Er
 
 ## Install
 
+\* Skip steps marked with an asterisk for Docker
+
 1. Fork it
 2. Clone it
 
@@ -11,25 +13,25 @@ A basic Node.js-based webhook server that executes TypeScript on-demand with [Er
 git clone https://github.com/selfagency/sandman.git
 ```
 
-3. Install dependencies (skip for Docker)
+3. Install dependencies\*
 
 ```sh
 pnpm i
 ```
 
-4. Build the server (skip for Docker)
+4. Build the server\*
 
 ```sh
 pnpm run build
 ```
 
-5. Create a `.env` file in the project root and add a random value for `LOG_KEY` (skip for Docker).
+5. Create a `.env` file in the project root and add a random value for `LOG_KEY`\*
 
 ```sh
 LOG_KEY="ye*@^nMGhLQMNun!s*PUnU^!HPrB*Ne2qeLZn^Ek!eZzgq5kjaPZfBL*r45JDqmR"
 ```
 
-5. Duplicate `config.example.toml` and edit away!
+6. Duplicate `config.example.toml` and edit away!
 
 ```sh
 cp config.example.toml config.toml

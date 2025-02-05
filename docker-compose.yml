@@ -1,7 +1,8 @@
 services:
   sandman:
     image: 'ghcr.io/selfagency/sandman:latest'
-    network_mode: host
+    networks:
+      - sandman
     ports:
       - '3000:3000'
       - '8001:8001'
@@ -14,3 +15,7 @@ services:
     environment:
       - 'NODE_ENV=${NODE_ENV}'
       - 'LOG_KEY=${LOG_KEY}'
+
+networks:
+  sandman:
+    driver: bridge

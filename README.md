@@ -66,7 +66,7 @@ docker run --name sandman \
   -v "$(pwd)/config.toml:/app/config.toml" \
   -v "$(pwd)/scripts:/app/scripts" \
   -p 3000:3000 \
-  -p 8081:8081 \
+  -p 8001:8001 \
   ghcr.io/selfagency/sandman:latest
 ```
 
@@ -83,10 +83,12 @@ curl -v \
 
 ## Logging
 
-A realtime logging console is provided via [Errsole](https://github.com/errsole/errsole.js) on port `8081`. You'll be asked to create a username and password the first time you visit it.
+A realtime logging console is provided via [Errsole](https://github.com/errsole/errsole.js) on port `8001`. You'll be asked to create a username and password the first time you visit it.
+
+A helper function is provided in `/scripts/common.ts` to transmit log messages to Errsole.
 
 ## Security Considerations
 
 1. Never commit your `config.toml` file, especially if it has passwords in it.
 2. You should absolutely run this behind a reverse proxy (which will provide HTTPS) and a web application firewall to provide defense against malicious actors.
-3. Be sure to secure both port `3000` and port `8081`.
+3. Be sure to secure both port `3000` and port `8001`.

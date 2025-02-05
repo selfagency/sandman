@@ -38,7 +38,7 @@ async function main() {
   for (const script in scripts) {
     const s = scripts[script] as unknown as Record<string, string>;
 
-    if (s && isEmpty(s.password)) {
+    if (s.auth && isEmpty(s.password)) {
       log.error(`'auth' is set to 'true' but 'password' is not set for script: ${script}`);
     }
 
@@ -64,10 +64,10 @@ async function main() {
             data = await c.req.json();
 
             // execute script
-            const result = await execa('tsx', [
+            const result = await execa(s.js ? 'node' : 'tsx', [
               '--env-file=.env',
               '--experimental-specifier-resolution=node',
-              `${process.cwd()}/scripts/${script}.ts`,
+              `${process.cwd()}/scripts/${script}.${s.js ? 'js' : 'ts'}`,
               !isEmpty(data) ? JSON.stringify(data) : '',
             ]);
 
@@ -95,22 +95,21 @@ async function main() {
 
   // log endpoint
   app.post('/log', basicAuth({ username: '', password: process.env.LOG_KEY as string }), async c => {
-    const { level, message, script }: Record<string, string> = await c.req.json();
-    const logMessage = `[${script}] ${message}`;
+    const { level, message }: Record<string, string> = await c.req.json();
 
     switch (level) {
       case 'info':
-        log.info(logMessage);
+        log.info(message);
         break;
       case 'error':
-        log.error(logMessage);
+        log.error(message);
         break;
       case 'warn':
-        log.warn(logMessage);
+        log.warn(message);
         break;
       case 'debug':
       default:
-        log.debug(logMessage);
+        log.debug(message);
         break;
     }
 

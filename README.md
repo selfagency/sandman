@@ -1,6 +1,6 @@
 # Sandman 🎩🪝
 
-A basic Node.js-based webhook server that executes TypeScript on-demand with [Errsole](https://github.com/errsole/errsole.js) logging.
+A personal Node.js-based webhook server that executes TypeScript on-demand with [Errsole](https://github.com/errsole/errsole.js) logging.
 
 ## Install
 
@@ -60,6 +60,8 @@ pnpm run start
 ```
 
 ### Docker
+
+Use the included `docker-compose.yml` or start up manually:
 
 ```sh
 docker pull ghcr.io/selfagency/sandman:latest

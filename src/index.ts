@@ -6,20 +6,41 @@ import { readFile } from 'fs/promises';
 import { serve } from '@hono/node-server';
 import { basicAuth } from 'hono/basic-auth';
 import { logger } from 'hono/logger';
+import { AsyncQueue } from '@sapphire/async-queue';
+import stripAnsi from 'strip-ansi';
 
 import { log } from './util';
 
 async function main() {
-  // instantiate web server
-  const app = new Hono();
-  app.use(logger(log.info));
+  // check for required environment variables
+  if (isEmpty(process.env.LOG_KEY)) {
+    log.error('LOG_KEY environment variable is required');
+    process.exit(1);
+  }
 
   // import configuration
-  const scripts = toml(await readFile(`${process.cwd()}/config.toml`, 'utf8'));
+  let scripts;
+  try {
+    scripts = toml(await readFile(`${process.cwd()}/config.toml`, 'utf8'));
+  } catch (err) {
+    log.error('Failed to read configuration file', err);
+    process.exit(1);
+  }
+
+  // instantiate web server
+  const app = new Hono();
+  app.use(logger((str: string, ...rest: string[]) => log.info(stripAnsi(str), ...rest)));
+
+  // instantiate queue
+  const queue = new AsyncQueue();
 
   // iterate over scripts and create routes
   for (const script in scripts) {
     const s = scripts[script] as unknown as Record<string, string>;
+
+    if (s && isEmpty(s.password)) {
+      log.error(`'auth' is set to 'true' but 'password' is not set for script: ${script}`);
+    }
 
     app.post(
       // current endpoint
@@ -35,6 +56,8 @@ async function main() {
       // handle request
       async c => {
         try {
+          await queue.wait();
+
           let data;
           try {
             // parse request body
@@ -63,6 +86,8 @@ async function main() {
 
           // return error
           return c.json({ success: false, error: (err as Error).message });
+        } finally {
+          queue.shift();
         }
       }
     );
@@ -93,7 +118,7 @@ async function main() {
   });
 
   // health check
-  app.get('/', c => c.json({ status: 'OK' }));
+  app.get('/health', c => c.json({ status: 'OK' }));
 
   // start server
   serve({ fetch: app.fetch, port: 3000 });

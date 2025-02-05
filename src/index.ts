@@ -67,7 +67,14 @@ async function runScript(script: string, config: Record<string, unknown>, ctx: C
     await queue.wait();
 
     // parse request body
-    const data = await ctx.req.json();
+    let payload;
+    try {
+      payload = await ctx.req.json();
+    } catch {
+      payload = await ctx.req.text();
+    }
+
+    log.info(`Executing \`${script}\` with payload:`, payload);
 
     // execute script
     return ctx.json(
@@ -75,7 +82,7 @@ async function runScript(script: string, config: Record<string, unknown>, ctx: C
         '--env-file=.env',
         '--experimental-specifier-resolution=node',
         `${process.cwd()}/scripts/${script}.${config.js ? 'js' : 'ts'}`,
-        !isEmpty(data) ? JSON.stringify(data) : '',
+        !isEmpty(payload) ? JSON.stringify(payload) : '',
       ])
     );
   } catch (error) {

@@ -1,13 +1,16 @@
 services:
   sandman:
-    image: ghcr.io/selfagency/sandman:latest
+    image: 'ghcr.io/selfagency/sandman:latest'
+    network_mode: host
     ports:
       - '3000:3000'
       - '8001:8001'
     volumes:
-      - ./config.toml:/app/config.toml
-      - ./data:/app/data
-      - ./scripts:/app/scripts
+      - './config.toml:/app/config.toml'
+      - './data:/app/data'
+      - './scripts:/app/scripts'
+    healthcheck:
+      test: curl --fail http://localhost:3000/health
     environment:
-      - NODE_ENV=${NODE_ENV}
-      - LOG_KEY=${LOG_KEY}
+      - 'NODE_ENV=${NODE_ENV}'
+      - 'LOG_KEY=${LOG_KEY}'

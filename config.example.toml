@@ -1,14 +1,13 @@
 [example]
-id = "41ca6d35-c8bf-4d66-80ad-04e3d6403ffe"
-name = "Example"
-description = "An example userscript"
+id = "317cac9d-2f3d-46cf-ba8d-273d385bf197"
 auth = false
-script = "example.ts"
 
 [secure-example]
-id = "4a7fea25-ced0-4793-9823-63f392a8caf4"
-name = "Secure example"
-description = "A secure example userscript"
+id = "87d42e91-7db9-42e8-a4eb-d3be46c84b02"
 auth = true
 password = "password"
-script = "secure-example.ts"
+
+[js-example]
+id = "13052600-4a29-4396-ace8-18feeb109f08"
+auth = false
+js = true

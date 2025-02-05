@@ -1,0 +1,10 @@
+.git
+.gitignore
+config.example.toml
+config.toml
+data
+scripts
+dist
+eslint.config.mjs
+node_modules
+prettier.config.mjs

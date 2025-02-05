@@ -67,7 +67,7 @@ async function main() {
             const result = await execa('tsx', [
               '--env-file=.env',
               '--experimental-specifier-resolution=node',
-              `${process.cwd()}/scripts/${s.script}`,
+              `${process.cwd()}/scripts/${script}.ts`,
               !isEmpty(data) ? JSON.stringify(data) : '',
             ]);
 
@@ -75,14 +75,14 @@ async function main() {
             return c.json(result);
           } catch {
             // log error
-            log.error('Failed to execute hook', s.id);
+            log.error('Failed to execute hook', script);
 
             // return error
             return c.json({ success: false, status: 400 });
           }
         } catch (err) {
           // log error
-          log.error('Failed to execute hook', s.id, err);
+          log.error('Failed to execute hook', script, err);
 
           // return error
           return c.json({ success: false, error: (err as Error).message });

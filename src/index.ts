@@ -2,94 +2,115 @@ import { execa } from 'execa';
 import { Hono } from 'hono';
 import { isEmpty } from 'radashi';
 import { parse as toml } from 'smol-toml';
-import { readFile } from 'fs/promises';
+import { readFile, readdir } from 'fs/promises';
 import { serve } from '@hono/node-server';
 import { basicAuth } from 'hono/basic-auth';
 import { logger } from 'hono/logger';
 import { AsyncQueue } from '@sapphire/async-queue';
-import stripAnsi from 'strip-ansi';
+import type { Context } from 'hono';
 
 import { log } from './util';
 
-async function main() {
-  // check for required environment variables
+// check for required environment variables
+function runChecks() {
   if (isEmpty(process.env.LOG_KEY)) {
     log.error('LOG_KEY environment variable is required');
     process.exit(1);
   }
+}
 
-  // import configuration
-  let scripts;
+function configCheck(script: string, config: Record<string, unknown>) {
+  if (config.auth && isEmpty(config.password)) {
+    log.warn(`'auth' is set to 'true' but 'password' is not set for script`, `\`${script}\``);
+  }
+}
+
+// import configuration
+async function loadConfig() {
   try {
-    scripts = toml(await readFile(`${process.cwd()}/config.toml`, 'utf8'));
+    const config = toml(await readFile(`${process.cwd()}/config.toml`, 'utf8'));
+    log.info('Configurations detected:', Object.keys(config));
+
+    // check for scripts
+    const files = await readdir(`${process.cwd()}/scripts`);
+    if (files.length === 0) {
+      log.error('No scripts found in the `scripts` directory');
+      process.exit(1);
+    } else {
+      log.info(
+        'Scripts detected:',
+        files.filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.startsWith('common'))
+      );
+    }
+
+    return config;
   } catch (err) {
-    log.error('Failed to read configuration file', err);
+    log.error('Failed to load configuration', err);
     process.exit(1);
   }
+}
 
-  // instantiate web server
+// instantiate web server
+function instantiateServer() {
   const app = new Hono();
-  app.use(logger((str: string, ...rest: string[]) => log.info(stripAnsi(str), ...rest)));
+  app.use(
+    logger((str: string, ...rest: string[]) => {
+      log.log(str, ...rest);
+    })
+  );
+  return app;
+}
 
-  // instantiate queue
+async function runScript(script: string, config: Record<string, unknown>, ctx: Context, queue: AsyncQueue) {
+  try {
+    // wait for queue
+    await queue.wait();
+
+    // parse request body
+    const data = await ctx.req.json();
+
+    // execute script
+    return ctx.json(
+      await execa(config.js ? 'node' : './node_modules/.bin/tsx', [
+        '--env-file=.env',
+        '--experimental-specifier-resolution=node',
+        `${process.cwd()}/scripts/${script}.${config.js ? 'js' : 'ts'}`,
+        !isEmpty(data) ? JSON.stringify(data) : '',
+      ])
+    );
+  } catch (error) {
+    // return error
+    log.error('Failed to execute hook', `\`${script}\``, error);
+    return ctx.json({ success: false, status: 400 });
+  } finally {
+    queue.shift();
+  }
+}
+
+async function main() {
+  runChecks();
+  const scripts = await loadConfig();
+  const app = instantiateServer();
   const queue = new AsyncQueue();
 
   // iterate over scripts and create routes
   for (const script in scripts) {
-    const s = scripts[script] as unknown as Record<string, string>;
-
-    if (s.auth && isEmpty(s.password)) {
-      log.error(`'auth' is set to 'true' but 'password' is not set for script: ${script}`);
-    }
+    const config = scripts[script] as unknown as Record<string, string>;
+    configCheck(script, config);
 
     app.post(
       // current endpoint
-      `/hooks/${s.id}`,
+      `/hooks/${config.id}`,
 
       // authentication
-      s.auth && !isEmpty(s.password)
-        ? basicAuth({ username: '', password: s.password })
+      config.auth && !isEmpty(config.password)
+        ? basicAuth({ username: '', password: config.password })
         : async (c, next) => {
             await next();
           },
 
-      // handle request
-      async c => {
-        try {
-          await queue.wait();
-
-          let data;
-          try {
-            // parse request body
-            data = await c.req.json();
-
-            // execute script
-            const result = await execa(s.js ? 'node' : 'tsx', [
-              '--env-file=.env',
-              '--experimental-specifier-resolution=node',
-              `${process.cwd()}/scripts/${script}.${s.js ? 'js' : 'ts'}`,
-              !isEmpty(data) ? JSON.stringify(data) : '',
-            ]);
-
-            // return result
-            return c.json(result);
-          } catch {
-            // log error
-            log.error('Failed to execute hook', script);
-
-            // return error
-            return c.json({ success: false, status: 400 });
-          }
-        } catch (err) {
-          // log error
-          log.error('Failed to execute hook', script, err);
-
-          // return error
-          return c.json({ success: false, error: (err as Error).message });
-        } finally {
-          queue.shift();
-        }
-      }
+      // run script
+      async c => runScript(script, config, c, queue)
     );
   }
 
@@ -121,6 +142,7 @@ async function main() {
 
   // start server
   serve({ fetch: app.fetch, port: 3000 });
+  log.info(`Sandman is accessible at http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`);
 }
 
 main();

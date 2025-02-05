@@ -4,7 +4,7 @@ async function main() {
   try {
     log.info('Hello, world!');
   } catch (err) {
-    console.error(err);
+    log.error((err as Error).message);
   }
 }
 

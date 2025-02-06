@@ -1,15 +1,14 @@
-FROM node:20-alpine
-RUN apk add --no-cache curl python3 make g++
+FROM node:20-bookworm-slim
+RUN apt update -y
+RUN apt install curl sqlite3 -y
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
 ENV COREPACK_INTEGRITY_KEYS="0"
 
 COPY . /app
 WORKDIR /app
 
 RUN corepack enable
-RUN pnpm install --frozen-lockfile
-RUN pnpm run build
+RUN npm install
+RUN npm run build
 
 CMD ["sh", "-c", "/app/entrypoint.sh"]

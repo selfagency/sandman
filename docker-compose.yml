@@ -9,7 +9,7 @@ services:
     volumes:
       - './config.toml:/app/config.toml'
       - './data:/app/data'
-      - './scripts:/app/scripts'
+      - './scripts:/scripts'
     healthcheck:
       test: curl --fail http://localhost:3000/health
     environment:

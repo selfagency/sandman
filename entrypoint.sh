@@ -1,5 +1,5 @@
 #!/bin/sh
-cd "/app/scripts" || exit
+cd "/scripts" || exit
 if [ -f "package.json" ]; then
   npm i
 fi

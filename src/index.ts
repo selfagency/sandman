@@ -33,16 +33,18 @@ async function loadConfig() {
 
     // check for scripts
     let scriptsPath = `${process.cwd()}/scripts`;
-    if (!isEmpty(process.env.OUTDIR)) scriptsPath = `${scriptsPath}/${process.env.OUTDIR}`;
-    const files = await readdir(scriptsPath);
+    if (!isEmpty(process.env.OUTDIR)) {
+      scriptsPath = `${scriptsPath}/${process.env.OUTDIR}`;
+      log.info('Using build folder:', scriptsPath);
+    }
+    const files = (await readdir(scriptsPath)).filter(
+      f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.startsWith('common')
+    );
     if (files.length === 0) {
-      log.error('No scripts found in the `scripts` directory');
+      log.error(`No scripts found in \`${scriptsPath}\``);
       process.exit(1);
     } else {
-      log.info(
-        'Scripts detected:',
-        files.filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.startsWith('common'))
-      );
+      log.info('Scripts detected:', files);
     }
 
     return config;

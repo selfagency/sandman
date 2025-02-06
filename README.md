@@ -40,7 +40,7 @@ code config.toml
 
 ## Config
 
-1. Drop your TypeScript files in `/scripts`. If bare metal, you can install any dependencies directly into the repo. If Docker, using [pre-bundled scripts](https://tsup.egoist.dev/) or a Git submodule is recommended.
+1. Drop your TypeScript files in `/scripts`. If bare metal, you can install any dependencies directly into the repo. If Docker, using [pre-bundled scripts](https://tsup.egoist.dev/) or a Git submodule is recommended. Use the environment variable `OUTDIR` to specify a build folder if needed.
 2. Add a corresponding block in `config.toml` where the block header is the name of the script file. Eg., if your script is named `example.ts`:
 
 ```toml

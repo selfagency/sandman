@@ -15,6 +15,7 @@ services:
     environment:
       - 'NODE_ENV=${NODE_ENV}'
       - 'LOG_KEY=${LOG_KEY}'
+      - 'OUTDIR=${OUTDIR}'
 
 networks:
   sandman:

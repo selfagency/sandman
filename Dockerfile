@@ -10,7 +10,5 @@ RUN npm run build
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV LOG_KEY=''
-ENV OUTDIR=''
 
 CMD ["node", "--experimental-specifier-resolution=node", "dist/index.js"]

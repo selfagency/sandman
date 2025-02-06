@@ -8,4 +8,9 @@ WORKDIR /app
 RUN npm install
 RUN npm run build
 
-CMD ["sh", "-c", "/app/entrypoint.sh"]
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV LOG_KEY=''
+ENV OUTDIR=''
+
+CMD ["node", "--experimental-specifier-resolution=node", "dist/index.js"]

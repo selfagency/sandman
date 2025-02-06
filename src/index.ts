@@ -41,7 +41,7 @@ async function loadConfig() {
     } else {
       log.info(
         'Scripts detected:',
-        files.filter(f => !f.startsWith('common'))
+        files.filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.startsWith('common'))
       );
     }
 
@@ -79,11 +79,13 @@ async function runScript(script: string, config: Record<string, unknown>, ctx: C
     log.info(`Executing \`${script}\` with payload:`, payload);
 
     // execute script
+    let scriptsPath = `${process.cwd()}/scripts`;
+    if (!isEmpty(process.env.OUTDIR)) scriptsPath = `${scriptsPath}/${process.env.OUTDIR}`;
     return ctx.json(
       await execa(config.js ? 'node' : './node_modules/.bin/tsx', [
         '--env-file=.env',
         '--experimental-specifier-resolution=node',
-        `${process.cwd()}/scripts/${script}.${config.js ? 'js' : 'ts'}`,
+        `${scriptsPath}/${script}.${config.js ? 'js' : 'ts'}`,
         !isEmpty(payload) ? JSON.stringify(payload) : '',
       ])
     );

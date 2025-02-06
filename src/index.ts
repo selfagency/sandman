@@ -129,21 +129,21 @@ async function main() {
 
   // log endpoint
   app.post('/log', basicAuth({ username: '', password: process.env.LOG_KEY as string }), async c => {
-    const { level, message }: Record<string, string> = await c.req.json();
+    const { level, message, rest }: Record<string, unknown> = await c.req.json();
 
     switch (level) {
       case 'info':
-        log.info(message);
+        log.info(message as string, ...(rest as string[]));
         break;
       case 'error':
-        log.error(message);
+        log.error(message as string, ...(rest as string[]));
         break;
       case 'warn':
-        log.warn(message);
+        log.warn(message as string, ...(rest as string[]));
         break;
       case 'debug':
       default:
-        log.debug(message);
+        log.debug(message as string, ...(rest as string[]));
         break;
     }
 

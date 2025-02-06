@@ -2,7 +2,7 @@ FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV COREPACK_INTEGRITY_KEYS="0"
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl sqlite
 COPY . /app
 WORKDIR /app
 

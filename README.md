@@ -67,6 +67,7 @@ Use the included `docker-compose.yml` or start up manually:
 docker pull ghcr.io/selfagency/sandman:latest
 docker run --name sandman \
   -e LOG_KEY=${LOG_KEY} \
+  -v "$(pwd)/.env:/app/.env" \
   -v "$(pwd)/data:/app/data" \
   -v "$(pwd)/config.toml:/app/config.toml" \
   -v "$(pwd)/scripts:/app/scripts" \

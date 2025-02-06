@@ -32,7 +32,7 @@ async function loadConfig() {
     log.info('Configurations detected:', Object.keys(config));
 
     // check for scripts
-    const files = await readdir(`/scripts`);
+    const files = await readdir(`/app/scripts`);
     if (files.length === 0) {
       log.error('No scripts found in the `scripts` directory');
       process.exit(1);

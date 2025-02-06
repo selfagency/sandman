@@ -6,7 +6,6 @@ COPY . /app
 WORKDIR /app
 
 RUN npm install
-RUN npx @puppeteer/browsers install chrome@stable
 RUN npm run build
 
 ENV NODE_ENV=production

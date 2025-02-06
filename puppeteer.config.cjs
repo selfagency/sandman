@@ -2,6 +2,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { dirname, join } = require('path');
 
-export default {
+module.exports = {
   cacheDirectory: join(dirname(), '.puppeteer'),
 };

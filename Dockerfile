@@ -6,7 +6,7 @@ RUN apk add --no-cache curl sqlite
 COPY . /app
 WORKDIR /app
 
-RUN corepack enablee
+RUN corepack enable
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run build
 

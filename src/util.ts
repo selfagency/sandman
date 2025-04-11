@@ -1,16 +1,16 @@
+import { consola } from 'consola';
 import errsole from 'errsole';
 import ErrsoleSQLite from 'errsole-sqlite';
-import { consola } from 'consola';
-import stripAnsi from 'strip-ansi';
 import { isEmpty } from 'radashi';
+import stripAnsi from 'strip-ansi';
 
 consola.wrapConsole();
 
 errsole.initialize({
-  storage: new ErrsoleSQLite(`${process.cwd()}/data/logs.sqlite`),
   appName: 'sandman',
-  enableConsoleOutput: true,
   collectLogs: [],
+  enableConsoleOutput: true,
+  storage: new ErrsoleSQLite(`${process.cwd()}/data/logs.sqlite`),
 });
 
 const log = {

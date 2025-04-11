@@ -1,6 +1,6 @@
 # Sandman 🎩🪝
 
-A personal Node.js-based webhook server that executes TypeScript on-demand, with basic auth and [Errsole](https://github.com/errsole/errsole.js) logging.
+A personal Node.js-based webhook server that executes TypeScript on-demand, with basic auth, [Puppeteer](https://pptr.dev/) for browser automation, and [Errsole](https://github.com/errsole/errsole.js) logging.
 
 ## Install
 

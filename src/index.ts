@@ -1,28 +1,32 @@
-import { execa } from 'execa';
-import { Hono } from 'hono';
-import { isEmpty } from 'radashi';
-import { parse as toml } from 'smol-toml';
-import { readFile, readdir } from 'fs/promises';
-import { serve } from '@hono/node-server';
-import { basicAuth } from 'hono/basic-auth';
-import { logger } from 'hono/logger';
-import { AsyncQueue } from '@sapphire/async-queue';
 import type { Context } from 'hono';
 
-import { log } from './util';
+import { serve } from '@hono/node-server';
+import { AsyncQueue } from '@sapphire/async-queue';
+import { execa } from 'execa';
+import { readdir, readFile } from 'fs/promises';
+import { Hono } from 'hono';
+import { basicAuth } from 'hono/basic-auth';
+import { logger } from 'hono/logger';
+import { isEmpty } from 'radashi';
+import { parse as toml } from 'smol-toml';
 
-// check for required environment variables
-function runChecks() {
-  if (isEmpty(process.env.LOG_KEY)) {
-    log.error('LOG_KEY environment variable is required');
-    process.exit(1);
-  }
-}
+import { log } from './util';
 
 function configCheck(script: string, config: Record<string, unknown>) {
   if (config.auth && isEmpty(config.password)) {
     log.warn(`'auth' is set to 'true' but 'password' is not set for script`, `\`${script}\``);
   }
+}
+
+// instantiate web server
+function instantiateServer() {
+  const app = new Hono();
+  app.use(
+    logger((str: string, ...rest: string[]) => {
+      log.log(str, ...rest);
+    })
+  );
+  return app;
 }
 
 // import configuration
@@ -54,15 +58,70 @@ async function loadConfig() {
   }
 }
 
-// instantiate web server
-function instantiateServer() {
-  const app = new Hono();
-  app.use(
-    logger((str: string, ...rest: string[]) => {
-      log.log(str, ...rest);
-    })
-  );
-  return app;
+async function main() {
+  runChecks();
+  const scripts = await loadConfig();
+  const app = instantiateServer();
+  const queue = new AsyncQueue();
+
+  // iterate over scripts and create routes
+  for (const script in scripts) {
+    const config = scripts[script] as unknown as Record<string, string>;
+    configCheck(script, config);
+
+    app.post(
+      // current endpoint
+      `/hooks/${config.id}`,
+
+      // authentication
+      config.auth && !isEmpty(config.password)
+        ? basicAuth({ password: config.password, username: '' })
+        : async (c, next) => {
+            await next();
+          },
+
+      // run script
+      async c => runScript(script, config, c, queue)
+    );
+  }
+
+  // log endpoint
+  app.post('/log', basicAuth({ password: process.env.LOG_KEY as string, username: '' }), async c => {
+    const { level, message, rest }: Record<string, unknown> = await c.req.json();
+
+    switch (level) {
+      case 'error':
+        log.error(message as string, ...(rest as string[]));
+        break;
+      case 'info':
+        log.info(message as string, ...(rest as string[]));
+        break;
+      case 'warn':
+        log.warn(message as string, ...(rest as string[]));
+        break;
+      case 'debug':
+      default:
+        log.debug(message as string, ...(rest as string[]));
+        break;
+    }
+
+    return c.json({ logged: true });
+  });
+
+  // health check
+  app.get('/health', c => c.json({ status: 'OK' }));
+
+  // start server
+  serve({ fetch: app.fetch, port: 3000 });
+  log.info(`Sandman is accessible at http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`);
+}
+
+// check for required environment variables
+function runChecks() {
+  if (isEmpty(process.env.LOG_KEY)) {
+    log.error('LOG_KEY environment variable is required');
+    process.exit(1);
+  }
 }
 
 async function runScript(script: string, config: Record<string, unknown>, ctx: Context, queue: AsyncQueue) {
@@ -94,68 +153,10 @@ async function runScript(script: string, config: Record<string, unknown>, ctx: C
   } catch (error) {
     // return error
     log.error('Failed to execute hook', `\`${script}\``, error);
-    return ctx.json({ success: false, status: 400 });
+    return ctx.json({ status: 400, success: false });
   } finally {
     queue.shift();
   }
-}
-
-async function main() {
-  runChecks();
-  const scripts = await loadConfig();
-  const app = instantiateServer();
-  const queue = new AsyncQueue();
-
-  // iterate over scripts and create routes
-  for (const script in scripts) {
-    const config = scripts[script] as unknown as Record<string, string>;
-    configCheck(script, config);
-
-    app.post(
-      // current endpoint
-      `/hooks/${config.id}`,
-
-      // authentication
-      config.auth && !isEmpty(config.password)
-        ? basicAuth({ username: '', password: config.password })
-        : async (c, next) => {
-            await next();
-          },
-
-      // run script
-      async c => runScript(script, config, c, queue)
-    );
-  }
-
-  // log endpoint
-  app.post('/log', basicAuth({ username: '', password: process.env.LOG_KEY as string }), async c => {
-    const { level, message, rest }: Record<string, unknown> = await c.req.json();
-
-    switch (level) {
-      case 'info':
-        log.info(message as string, ...(rest as string[]));
-        break;
-      case 'error':
-        log.error(message as string, ...(rest as string[]));
-        break;
-      case 'warn':
-        log.warn(message as string, ...(rest as string[]));
-        break;
-      case 'debug':
-      default:
-        log.debug(message as string, ...(rest as string[]));
-        break;
-    }
-
-    return c.json({ logged: true });
-  });
-
-  // health check
-  app.get('/health', c => c.json({ status: 'OK' }));
-
-  // start server
-  serve({ fetch: app.fetch, port: 3000 });
-  log.info(`Sandman is accessible at http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`);
 }
 
 main();

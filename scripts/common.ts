@@ -24,7 +24,7 @@ const log = {
     const logMessage = `[${script}] ${message}`;
     transport('debug', logMessage, rest).then(() => console.debug(logMessage, ...rest));
   },
-  error(message: string, ...rest: unknown[]) {
+  error(message: Error | string, ...rest: unknown[]) {
     const script = process.argv[1]
       .split('/')
       .pop()

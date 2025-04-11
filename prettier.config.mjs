@@ -3,7 +3,6 @@
 const config = {
   arrowParens: 'avoid',
   bracketSpacing: true,
-  plugins: ['prettier-plugin-organize-attributes'],
   printWidth: 120,
   proseWrap: 'preserve',
   semi: true,

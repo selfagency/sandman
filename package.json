@@ -29,7 +29,7 @@
     "errsole": "^2.17.2",
     "errsole-sqlite": "^3.0.3",
     "execa": "^9.5.2",
-    "hono": "^4.7.6",
+    "hono": "^4.11.4",
     "radashi": "^12.5.1",
     "smol-toml": "^1.3.1",
     "sqlite3": "^5.1.7",
